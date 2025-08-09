@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>✨행운 쿠키 — 오늘의 한 줄</title>
+  <meta name="description" content="깔롱하고 심플한 행운 쿠키 웹 — 버튼 누르면 쿠키 깨지고 메시지 등장!" />
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1:#FFDEE9; --bg2:#B5FFFC; --accent:#FF7BAC; --glass: rgba(255,255,255,0.65);
+      --card-shadow: 0 10px 30px rgba(20,20,40,0.12);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:'Nanum Gothic', 'Space Grotesk', system-ui, -apple-system, "Segoe UI", Roboto;
+      background: radial-gradient(1200px 600px at 10% 20%, rgba(255,255,255,0.15), transparent), linear-gradient(120deg,var(--bg1),var(--bg2));
+      display:flex; align-items:center; justify-content:center; padding:32px;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+
+    .wrap{width:min(940px,96%); display:grid; grid-template-columns:1fr 360px; gap:28px; align-items:center}
+    @media (max-width:900px){.wrap{grid-template-columns:1fr;}}
+
+    /* Left big card */
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.55));
+      border-radius:24px; padding:36px; box-shadow:var(--card-shadow); backdrop-filter: blur(8px);
+      position:relative; overflow:visible;
+    }
+
+    .title{display:flex; align-items:center; gap:14px}
+    .logo{width:68px; height:68px; border-radius:14px; background:linear-gradient(135deg,#fff2, #fff6); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:22px; color:var(--accent); box-shadow:0 6px 18px rgba(0,0,0,0.08);}
+    h1{margin:0; font-size:20px}
+    p.lead{margin:12px 0 24px; color:#333a; font-size:14px}
+
+    .stage{display:flex; gap:28px; align-items:center}
+
+    /* Cookie area */
+    .cookie-wrap{width:320px; height:320px; display:flex; align-items:center; justify-content:center; position:relative}
+    .cookie{width:220px; height:220px; border-radius:50%; background:linear-gradient(160deg,#E0A16C,#C57B44); box-shadow: 0 18px 40px rgba(0,0,0,0.18); display:flex; align-items:center; justify-content:center; cursor:pointer; transform-origin:center; transition:transform .25s ease}
+    .cookie.shake{animation:shake .8s}
+    @keyframes shake{0%{transform:rotate(0)}20%{transform:rotate(-12deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(6deg)}100%{transform:rotate(0)}}
+
+    .crack{position:absolute; width:220px; height:220px; pointer-events:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,0.1));}
+    .broken{display:none}
+    .note{
+      position:absolute; bottom:18px; width:78%; left:50%; transform:translateX(-50%) translateY(20px); background:linear-gradient(180deg,#fff,#fff9); padding:14px 18px; border-radius:12px; box-shadow:0 8px 26px rgba(30,30,70,0.12); text-align:center; opacity:0; transform-origin:center; transition:all .45s cubic-bezier(.2,.9,.25,1);
+      font-weight:700; color:#222; font-size:16px; line-height:1.2;
+    }
+    .note.show{opacity:1; transform:translateX(-50%) translateY(0) scale(1)}
+
+    .controls{display:flex; gap:12px; margin-top:18px}
+    .btn{padding:12px 16px; border-radius:12px; border:0; cursor:pointer; font-weight:700; letter-spacing:0.2px; box-shadow:0 6px 18px rgba(0,0,0,0.08)}
+    .btn-primary{background:linear-gradient(90deg,var(--accent),#FFB199); color:white}
+    .btn-ghost{background:transparent; border:1px solid rgba(0,0,0,0.06)}
+
+    /* Right panel */
+    .side{display:flex; flex-direction:column; gap:18px}
+    .history{background:var(--glass); padding:14px; border-radius:12px; min-height:120px}
+    .history h3{margin:0 0 8px 0; font-size:13px}
+    .hist-list{display:flex; flex-direction:column; gap:8px; max-height:220px; overflow:auto}
+    .hist-item{font-size:13px; padding:8px 10px; border-radius:8px; background:linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4)); box-shadow:inset 0 -1px 0 rgba(255,255,255,0.3)}
+
+    .hint{font-size:12px; color:#222a}
+
+    /* confetti canvas */
+    canvas.confetti{position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none}
+
+    footer{margin-top:14px; font-size:12px; color:#222a}
+
+    /* small flourish */
+    .sparkle{position:absolute; width:10px; height:10px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #fff, rgba(255,255,255,0.5)); box-shadow:0 6px 20px rgba(255,120,180,0.2); opacity:0.9}
+
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="title">
+        <div class="logo">🍪</div>
+        <div>
+          <h1>오늘의 행운 쿠키</h1>
+          <p class="lead">버튼을 톡 눌러 쿠키를 깨면, 오늘의 운세가 나와요. 마음에 들면 복사하거나 저장해보세요.</p>
+        </div>
+      </div>
+
+      <div class="stage" style="margin-top:8px;">
+        <div class="cookie-wrap">
+          <div id="cookie" class="cookie" title="쿠키를 깨보세요!">
+            <!-- simple cookie chip dots -->
+            <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="g1" cx="0.6" cy="0.3">
+                  <stop offset="0" stop-color="#fff3" />
+                </radialGradient>
+              </defs>
+              <circle cx="90" cy="90" r="80" fill="url(#cookieGradient)" />
+            </svg>
+          </div>
+
+          <svg class="crack" id="crack" viewBox="0 0 220 220" width="220" height="220" xmlns="http://www.w3.org/2000/svg">
+            <g stroke="#3a2a1f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none">
+              <path id="cr1" d="M110 40 L120 85 L98 110 L126 132 L102 158" stroke-opacity="0.06"></path>
+            </g>
+          </svg>
+
+          <div id="note" class="note">준비 중...</div>
+
+        </div>
+
+        <div style="flex:1;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <div>
+              <div style="font-size:13px; font-weight:800; color:#111">한 번의 터치로 보는 오늘의 운세</div>
+              <div class="hint">세련된 문구들이 랜덤으로 나와요 — 총 <span id="count">0</span>개</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:12px; color:#222a">오늘: <strong id="todayDate"></strong></div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button id="breakBtn" class="btn btn-primary">쿠키 깨기 ✨</button>
+            <button id="againBtn" class="btn btn-ghost">다시</button>
+            <button id="copyBtn" class="btn btn-ghost">복사</button>
+          </div>
+
+          <footer>Tip: 쿠키를 길게 누르거나 '다시' 눌러 여러 문구를 저장해보세요.</footer>
+        </div>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="history">
+        <h3>저장된 문구</h3>
+        <div id="history" class="hist-list"><div class="hist-item">아직 없어요 — 쿠키를 깨보세요.</div></div>
+      </div>
+
+      <div class="history">
+        <h3>설정</h3>
+        <div style="display:flex; gap:8px; align-items:center; font-size:13px">
+          <label style="display:flex; gap:8px; align-items:center"><input id="autoConfetti" type="checkbox" checked> 자동 축하(콘페티)</label>
+        </div>
+      </div>
+
+    </aside>
+
+    <canvas class="confetti" id="confetti"></canvas>
+  </div>
+
+  <script>
+    // --- Data: 행운 문구(깔롱하게!) ---
+    const fortunes = [
+      "너는 너가 생각하는 것보다 존나 강해.",
+      "오늘은 뭘 해도 다 잘 될 거야.",
+      "딴 새끼들 말에 휘둘리지 마.",
+      "오늘은 송하영같은 날이 될거야.",
+      "너가 틀린게 아니라 딴 새끼들이 틀린거야",
+      "오늘은 바로 너의 날.",
+      "늦었다고 생각할 때는 진짜 존나 늦은거야. 빨리 시작해.",
+      "오늘의 커피는 네 선택을 더 멋지게 만들어줄 거야.",
+      "희망이 안 보인다고 생각해? 그럼 희망을 만들어.",
+      "희망이 없어? 그럼...좀 슬프네.",
+      "지금 이 순간도 너의 멋진 포트폴리오 한 줄이 돼.",
+      "너는 너 맘대로 해. 그럼 모두가 널 싫어할거야.",
+      "오늘 들을 노래가 네 생애 최고의 노래가 될거야..",
+      "누가 널 이유 없이 싫어한다고 생각하면 너가 잘못된거야.",
+      "급할수록 더 천천히, 침착하게.",
+      "오늘 길에서 5만원 주움.",
+      "오늘 길에서 만원 주움.",
+      "오늘 네 이상형 봄.",
+      "새로운 친구를 사귈거야.",
+      "오늘은 너의 최고의 날.",
+    ];
+
+    // --- 기본 엘리먼트 ---
+    const cookie = document.getElementById('cookie');
+    const breakBtn = document.getElementById('breakBtn');
+    const againBtn = document.getElementById('againBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const note = document.getElementById('note');
+    const historyEl = document.getElementById('history');
+    const countEl = document.getElementById('count');
+    const todayDate = document.getElementById('todayDate');
+    const confettiCanvas = document.getElementById('confetti');
+    const autoConfetti = document.getElementById('autoConfetti');
+
+    // --- 초기화 ---
+    countEl.textContent = fortunes.length;
+    todayDate.textContent = new Date().toLocaleDateString('ko-KR');
+
+    // load history
+    let saved = JSON.parse(localStorage.getItem('lucky_cookie_history')||'[]');
+    function renderHistory(){
+      historyEl.innerHTML = '';
+      if(!saved.length) historyEl.innerHTML = '<div class="hist-item">아직 없어요 — 쿠키를 깨보세요.</div>';
+      else saved.slice().reverse().forEach(s => {
+        const d = document.createElement('div'); d.className='hist-item'; d.textContent = s; historyEl.appendChild(d);
+      });
+    }
+    renderHistory();
+
+    // 랜덤 뽑기
+    function randFortune(){
+      return fortunes[Math.floor(Math.random()*fortunes.length)];
+    }
+
+    let last = '';
+    function showFortune(text){
+      note.textContent = text; note.classList.add('show');
+      // add to history
+      saved.push(text); localStorage.setItem('lucky_cookie_history', JSON.stringify(saved.slice(-50)));
+      renderHistory();
+      last = text;
+      if(autoConfetti.checked) launchConfetti();
+    }
+
+    // cookie interaction
+    function crackCookie(){
+      cookie.classList.add('shake');
+      setTimeout(()=>cookie.classList.remove('shake'),900);
+      // animate reveal
+      const f = randFortune();
+      setTimeout(()=>{
+        showFortune(f);
+      },420);
+    }
+
+    breakBtn.addEventListener('click', ()=>{
+      crackCookie();
+    });
+
+    againBtn.addEventListener('click', ()=>{
+      if(!last) { crackCookie(); return; }
+      showFortune(randFortune());
+    });
+
+    copyBtn.addEventListener('click', async ()=>{
+      if(!last){ navigator.clipboard.writeText(note.textContent||''); alert('먼저 쿠키를 깨서 문구를 만들어주세요!'); return; }
+      try{ await navigator.clipboard.writeText(last); copyBtn.textContent='복사됨 ✓'; setTimeout(()=>copyBtn.textContent='복사',1100); }catch(e){ alert('클립보드 복사 불가'); }
+    });
+
+    // long-press 기능: 모바일에서 쿠키 길게 누르면 바로 복사
+    let pressTimer = null;
+    cookie.addEventListener('pointerdown', (e)=>{ pressTimer = setTimeout(()=>{ if(last){ navigator.clipboard.writeText(last); alert('문구 복사됨!'); } else { crackCookie(); } }, 600); });
+    cookie.addEventListener('pointerup', ()=>{ if(pressTimer) clearTimeout(pressTimer); });
+    cookie.addEventListener('pointerleave', ()=>{ if(pressTimer) clearTimeout(pressTimer); });
+
+    // 가벼운 콘페티(직접 구현)
+    function resizeCanvas(){ confettiCanvas.width = window.innerWidth; confettiCanvas.height = window.innerHeight; }
+    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+    function launchConfetti(){
+      const ctx = confettiCanvas.getContext('2d');
+      const pieces = [];
+      const colors = ['#FF7BAC','#FFD76B','#9BF6FF','#B8FFB0','#C9B6FF'];
+      for(let i=0;i<60;i++){
+        pieces.push({x: Math.random()*confettiCanvas.width, y: Math.random()*confettiCanvas.height/2, r:Math.random()*6+4, vx:(Math.random()-0.5)*6, vy: Math.random()*3+2, color: colors[Math.floor(Math.random()*colors.length)], rot: Math.random()*360, vr: (Math.random()-0.5)*10});
+      }
+      let t=0;
+      function frame(){
+        t++; ctx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
+        pieces.forEach(p=>{
+          p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.rot += p.vr;
+          ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+          ctx.fillStyle = p.color; ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*0.6);
+          ctx.restore();
+        });
+        if(t<90) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    // 작은 UX: 시작 시 안내 메시지
+    note.textContent = '쿠키를 눌러 행운을 받아보세요 ✨';
+
+  </script>
+</body>
+</html>
